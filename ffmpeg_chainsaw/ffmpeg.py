@@ -1,17 +1,17 @@
-import subprocess
-from tempfile import NamedTemporaryFile
 import logging
+import os
+import subprocess
+import tempfile
+
 from .exceptions import DecodeError
 from .uploader import UploadTransmitter
-import os
-
 
 logger = logging.getLogger(__name__)
 
 def process_file(file_loc, ffmpeg_args, upload_transmitter: UploadTransmitter):
-     
-    output = NamedTemporaryFile(mode="rb", delete=True)
-    #conversion_command = "ffmpeg -i %s -acodec pcm_s16le -ac 1 -f wav -vn -y -ar 8000 %s"%(input.name, output.name)
+    
+    output_file = os.path.join(tempfile.gettempdir(), upload_transmitter.file_name)
+    output = open(output_file, "wb")
     
     conversion_command = [
         "ffmpeg",
@@ -26,9 +26,9 @@ def process_file(file_loc, ffmpeg_args, upload_transmitter: UploadTransmitter):
     if p.returncode != 0:
         raise DecodeError(f"Decoding failed. ffmpeg returned error code: {p.returncode}\n\nOutput from ffmpeg/avlib:\n\n{p_err}\n\n{p_out}")
     
-    output.seek(0)
+    output.close()
     print("process complete")
-    
+
     os.remove(file_loc)
     upload_transmitter(output)
 
