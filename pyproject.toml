@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "ffmpeg-chainsaw"
+version = "0.1.0"
+description = "Service to process files with FFmpeg"
+authors = ["Dayo Ayeni <dedayoa@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+Flask = "^1.1.2"
+requests = "^2.25.1"
+gunicorn = "^20.1.0"
+boto3 = "^1.17.43"
+paramiko = "^2.7.2"
+jsonschema = "^3.2.0"
+requests-toolbelt = "^0.9.1"
+
+[tool.poetry.dev-dependencies]
+pytest-flask = "^1.2.0"
+pytest-mock = "^3.5.1"
+yapf = "^0.31.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
