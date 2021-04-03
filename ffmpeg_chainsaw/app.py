@@ -2,6 +2,7 @@ import json
 import mimetypes
 import uuid
 import threading
+import psutil
 
 from flask import Blueprint, current_app, jsonify, request
 from jsonschema import validate
@@ -61,6 +62,9 @@ def upload_to_process():
     upload_transmitter = UploadTransmitter(output_file_name, output_file_mimetype, destination)
 
     # process file in background
+    if psutil.cpu_percent(interval=1) > 95:
+        raise HTTPException("server CPU at full load", 503)
+    
     thread = threading.Thread(target=process_file, args=(
         file_loc, ffmeg_arguments, upload_transmitter
     ))
