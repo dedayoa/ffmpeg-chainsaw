@@ -30,7 +30,7 @@ instruction_schema = {
             "properties": {
                 "protocol": {
                     "type": "string",
-                    "enum": ["s3", "http", "ftp"]
+                    "enum": ["s3", "http", "sftp"]
                 }
             },
             "allOf": [
@@ -48,13 +48,14 @@ instruction_schema = {
                                 "awsSecretAccessKey": {
                                     "type": "string"
                                 },
-                                "regionName": {
-                                    "type": "string"
-                                },
                                 "bucketName": {
                                     "type": "string"
+                                },
+                                "extraArgs": {
+                                    "type": "object"
                                 }
-                            }
+                            },
+                            "required": ["awsAccessKeyId", "awsSecretAccessKey", "bucketName"]
                         }}
                     }
                 },
@@ -81,7 +82,8 @@ instruction_schema = {
                                 "password": {
                                     "type": "string"
                                 }
-                            }
+                            },
+                            "required": ["host","username","password"]
                         }}
                     }
                 },
