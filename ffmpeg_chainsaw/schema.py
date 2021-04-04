@@ -30,7 +30,7 @@ instruction_schema = {
             "properties": {
                 "protocol": {
                     "type": "string",
-                    "enum": ["s3", "http", "sftp"]
+                    "enum": ["s3", "http", "sftp", "disk"]
                 }
             },
             "allOf": [
@@ -115,6 +115,23 @@ instruction_schema = {
                                 }
                             },
                             "required": ['url']
+                        }}
+                    }
+                },
+                {
+                    "if": {
+                        "properties": { "protocol": {"const": "disk"} }
+                    },
+                    "then": {
+                        "properties": { "configuration": {
+                            "type": "object",
+                            "properties": {
+                                "directory": {
+                                    "type": "string",
+                                    "description": "The directory into which the file should be stored"
+                                }
+                            },
+                            "required": ['directory']
                         }}
                     }
                 }

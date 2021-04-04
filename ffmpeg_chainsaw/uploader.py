@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 
 import boto3
 import pysftp
@@ -30,6 +31,8 @@ class UploadTransmitter:
             self.upload_s3(file_handle)
         if protocol == "sftp":
             self.upload_sftp(file_handle)
+        if protocol == "disk":
+            self.copy_disk(file_handle)
 
         os.remove(file_handle.name)
 
@@ -104,3 +107,17 @@ class UploadTransmitter:
             logger.error(e)
 
         print('uploaded sftp')
+
+    def copy_disk(self, file):
+        configuration = self.destination.get("configuration")
+        directory = configuration.get("directory")
+        
+        if not os.path.isdir(directory):
+            return        
+        
+        try:
+            shutil.copyfile(file.name, os.path.join(directory, os.path.basename(file.name)))
+        except Exception as e:
+            logger.error(e)
+
+        print('copied disk')
