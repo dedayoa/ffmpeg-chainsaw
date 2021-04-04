@@ -108,6 +108,10 @@ instruction_schema = {
                                 "fieldName": {
                                     "type": "string",
                                     "description": "The expected field name of the file to be uploaded for the http post request. Defaults to 'file'"
+                                },
+                                "customHeaders": {
+                                    "type": "object",
+                                    "description": "Custom headers that should be sent along with http request"
                                 }
                             },
                             "required": ['url']

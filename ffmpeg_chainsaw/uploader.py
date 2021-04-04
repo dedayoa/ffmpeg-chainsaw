@@ -39,12 +39,13 @@ class UploadTransmitter:
         username = configuration.get("username", "")
         password = configuration.get("password", "")
         field_name = configuration.get("fieldName", "file")
+        custom_headers = configuration.get("customHeaders", {})
 
         e = encoder.MultipartEncoder(
             fields={field_name: (self.file_name, file, self.mimetype)})
         m = encoder.MultipartEncoderMonitor(e, http_upload_callback)
 
-        headers = {'Content-Type': m.content_type}
+        headers = {'Content-Type': m.content_type}.update(custom_headers)
         try:
             response = None
             if username:
