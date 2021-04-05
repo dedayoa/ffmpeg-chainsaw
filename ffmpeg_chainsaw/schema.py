@@ -20,9 +20,25 @@ instruction_schema = {
             "type": "string",
             "description": "The name of the output file name including the extension. A random name is provided if not provided"
         },
-        "statusURL": {
-            "type": "string",
-            "description": "The webhook url where status updates are sent"
+        "updateCallback": {
+            "type": "object",
+            "description": "The callback to the webhook where updates are sent",
+            "properties": {
+                "url": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "customHeaders": {
+                    "type": "object",
+                    "description": "Custom headers that should be sent along with http request"
+                }
+            },
+            "required": ["url"]
         },
         "destination": {
             "type": "object",
