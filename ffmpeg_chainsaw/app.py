@@ -1,9 +1,8 @@
 import json
 import mimetypes
 import uuid
-import threading
-import psutil
 
+import psutil
 from flask import Blueprint, current_app, jsonify, request
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
@@ -50,9 +49,10 @@ def upload_to_process():
     except ValidationError as e:
         raise HTTPException(f'invalid instruction: {e.message}')
 
-    ffmeg_arguments = instruction.get('ffmpegArgs')
+    ffmpeg_arguments = instruction.get('ffmpegArgs')
     output_file_ext = instruction.get('outputFileExt')
     output_file_name = f"{instruction.get('outputFileName', file_name)}.{output_file_ext}"
+    update_callback_data = instruction.get('updateCallback')
     
     guessed_mime_type = mimetypes.guess_type(output_file_name)[0]
     output_file_mimetype = instruction.get('outputFileMimeType',
@@ -61,15 +61,10 @@ def upload_to_process():
 
     upload_transmitter = UploadTransmitter(output_file_name, output_file_mimetype, destination)
 
-    # process file in background
     if psutil.cpu_percent(interval=1) > 95:
         raise HTTPException("server CPU at full load", 503)
     
-    thread = threading.Thread(target=process_file, args=(
-        file_loc, ffmeg_arguments, upload_transmitter
-    ))
-    thread.daemon = True
-    thread.start()
+    process_file(file_loc, ffmpeg_arguments, upload_transmitter, update_callback_data)        
 
     return {"message": instruction}
 
