@@ -42,6 +42,10 @@ def upload_to_process():
     f.save(file_loc)
 
     data = request.form.to_dict()
+    instruction_data = data.get('instruction', None)
+    if not instruction_data:
+        raise HTTPException('instruction not provided in request')
+    
     instruction = json.loads(data.get('instruction'))
 
     try:
