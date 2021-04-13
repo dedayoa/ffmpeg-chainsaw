@@ -7,8 +7,8 @@ import pysftp
 import requests
 from botocore.exceptions import ClientError
 from requests.auth import HTTPBasicAuth
-from requests.exceptions import ConnectTimeout
 from requests_toolbelt.multipart import encoder
+from .helpers import send_update
 
 logger = logging.getLogger(__name__)
 
@@ -18,13 +18,21 @@ def http_upload_callback(monitor):
 
 
 class UploadTransmitter:
+    """Responsible for uploding(or copying) processed file
+
+    Args:
+        file_name (str): the name of the processed file
+        file_mimetype (str): the mime type of the processed file
+        destination (dict): dictionary that described the upload (or copy) destination
+    """
     def __init__(self, file_name, file_mimetype, destination):
         self.file_name = file_name
         self.mimetype = file_mimetype
         self.destination = destination
 
-    def __call__(self, file_handle):
+    def __call__(self, file_handle, update_callback_data):
         protocol = self.destination.get('protocol')
+        self.update_callback_data = update_callback_data
         if protocol == "http":
             self.upload_http(file_handle)
         if protocol == "s3":
@@ -59,10 +67,12 @@ class UploadTransmitter:
                                          data=m)
             else:
                 response = requests.post(url, data=m, headers=headers)
-        except ConnectTimeout:
-            pass
-
-        print('uploaded http')
+            
+            send_update('INFO', 'file uploaded successfully with http', self.update_callback_data)
+        except Exception as e:
+            logger.error(e)
+            send_update('ERROR', f'http file upload failed. {e}', self.update_callback_data)
+        
 
     def upload_s3(self, file):
         configuration = self.destination.get("configuration")
@@ -79,9 +89,10 @@ class UploadTransmitter:
                                                 bucket_name,
                                                 self.file_name,
                                                 ExtraArgs=extra_args)
+            send_update('INFO', 'file uploaded successfully with s3', self.update_callback_data)
         except ClientError as e:
             logger.error(e)
-        print('uploaded s3')
+            send_update('ERROR', f's3 file upload failed. {e}', self.update_callback_data)
 
     def upload_sftp(self, file):
         configuration = self.destination.get("configuration")
@@ -103,21 +114,23 @@ class UploadTransmitter:
                 if directory:
                     sftp.chdir(directory)
                 sftp.put(file.name)
+            send_update('INFO', 'file uploaded successfully with sftp', self.update_callback_data)
         except Exception as e:
             logger.error(e)
-
-        print('uploaded sftp')
+            send_update('ERROR', f'sftp file upload failed. {e}', self.update_callback_data)
 
     def copy_disk(self, file):
         configuration = self.destination.get("configuration")
         directory = configuration.get("directory")
-        
+
         if not os.path.isdir(directory):
-            return        
-        
+            return
+
         try:
-            shutil.copyfile(file.name, os.path.join(directory, os.path.basename(file.name)))
+            shutil.copyfile(
+                file.name, os.path.join(directory,
+                                        os.path.basename(file.name)))
+            send_update('INFO', 'file copied successfully', self.update_callback_data)
         except Exception as e:
             logger.error(e)
-
-        print('copied disk')
+            send_update('ERROR', f'disk file copy failed. {e}', self.update_callback_data)
