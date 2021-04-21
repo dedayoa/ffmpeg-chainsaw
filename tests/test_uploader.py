@@ -57,7 +57,7 @@ class TestUploadTransmitter:
             ""
         )
 
-    def test__upload_processed_file_no_content_type(self, mocker):
+    def test__upload_processed_file_raise_keyerror_when_no_content_type(self, mocker):
         destination = {"protocol": "http", "configuration": {}}
         url = 'http://url.com'
         headers = {"Age": 10}
@@ -93,7 +93,7 @@ class TestUploadTransmitter:
         )
         mock_send_update.assert_called_with('INFO', 'file uploaded successfully with http', update_callback_data)
 
-    def test__upload_processed_file_request_not_e200(self, mocker):
+    def test__upload_processed_file_raises_exception_when_response_status_code_not_200(self, mocker):
         url = 'http://url.com'
         headers = {"Content-Type": "audio/wav", "Age": 10}
         update_callback_data = {"url": "http://updatedest.net/update.cgi"}
@@ -112,3 +112,26 @@ class TestUploadTransmitter:
             upload_transmitter._upload_processed_file(url, mock_data, headers, username)
             
             mock_send_update.assert_called_with('ERROR', f'http file upload failed. {e}', update_callback_data)
+
+    def test__upload_processed_file_when_no_auth(self, mocker):
+        url = 'http://url.com'
+        headers = {"Content-Type": "audio/wav", "Age": 10}
+        update_callback_data = {"url": "http://updatedest.net/update.cgi"}
+        destination = {"protocol": "http", "configuration": {}}
+        mock_data = mocker.patch('ffmpeg_chainsaw.uploader.encoder.MultipartEncoderMonitor')
+        mock_send_update = mocker.patch('ffmpeg_chainsaw.uploader.send_update')
+
+        mock_post_request = mocker.patch.object(requests, 'post', autospec=True)
+        mock_post_request.return_value.status_code = 200
+
+        upload_transmitter = UploadTransmitter(self.file_name, self.file_mimetype, destination)
+        upload_transmitter.update_callback_data = update_callback_data
+        upload_transmitter._upload_processed_file(url, mock_data, headers)
+        
+        mock_post_request.assert_called_with(
+            url,
+            headers = headers,
+            data=mock_data
+        )
+            
+        mock_send_update.assert_called_with('INFO', 'file uploaded successfully with http', update_callback_data)
