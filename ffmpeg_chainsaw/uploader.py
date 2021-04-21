@@ -42,7 +42,30 @@ class UploadTransmitter:
         if protocol == "disk":
             self.copy_disk(file_handle)
 
-        os.remove(file_handle.name)
+        os.remove(file_handle.name)            
+
+    def _upload_processed_file(self, url, data, headers: dict, username="", password=""):
+        if "Content-Type" not in headers.keys():
+            raise KeyError("'Content-Type' header is required")
+        
+        try:
+            response = None
+            if username:
+                response = requests.post(url,
+                                         auth=HTTPBasicAuth(
+                                             username, password),
+                                         headers=headers,
+                                         data=data)
+            else:
+                response = requests.post(url, data=data, headers=headers)
+            
+            if response.status_code != 200:
+                raise Exception(f"request returned status code {response.status_code}")
+            
+            send_update('INFO', 'file uploaded successfully with http', self.update_callback_data)
+        except Exception as e:
+            logger.error(e)
+            send_update('ERROR', f'http file upload failed. {e}', self.update_callback_data)
 
     def upload_http(self, file):
         configuration = self.destination.get("configuration")
@@ -56,22 +79,10 @@ class UploadTransmitter:
             fields={field_name: (self.file_name, file, self.mimetype)})
         m = encoder.MultipartEncoderMonitor(e, http_upload_callback)
 
-        headers = {'Content-Type': m.content_type}.update(custom_headers)
-        try:
-            response = None
-            if username:
-                response = requests.post(url,
-                                         auth=HTTPBasicAuth(
-                                             username, password),
-                                         headers=headers,
-                                         data=m)
-            else:
-                response = requests.post(url, data=m, headers=headers)
-            
-            send_update('INFO', 'file uploaded successfully with http', self.update_callback_data)
-        except Exception as e:
-            logger.error(e)
-            send_update('ERROR', f'http file upload failed. {e}', self.update_callback_data)
+        headers = {'Content-Type': m.content_type} | custom_headers
+
+        self._upload_processed_file(url, m, headers, username, password)
+
         
 
     def upload_s3(self, file):
@@ -85,10 +96,10 @@ class UploadTransmitter:
                                  aws_access_key_id=access_key_id,
                                  aws_secret_access_key=secret_access_key)
         try:
-            response = s3_client.upload_fileobj(file,
-                                                bucket_name,
-                                                self.file_name,
-                                                ExtraArgs=extra_args)
+            s3_client.upload_fileobj(file,
+                                    bucket_name,
+                                    self.file_name,
+                                    ExtraArgs=extra_args)
             send_update('INFO', 'file uploaded successfully with s3', self.update_callback_data)
         except ClientError as e:
             logger.error(e)
