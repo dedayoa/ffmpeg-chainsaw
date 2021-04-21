@@ -1,6 +1,7 @@
 import ffmpeg_chainsaw
 import pytest
 import datetime
+import tempfile
 
 @pytest.fixture
 def app():
@@ -18,3 +19,18 @@ def mocked_datetime_now(mocker):
     mock_datetime = mocker.patch('ffmpeg_chainsaw.helpers.datetime')
     mock_datetime.datetime.now.return_value = now
     yield now
+
+@pytest.fixture
+def http_upload_configuration():
+    return {
+        "protocol": "http",
+        "configuration": {
+            "username": "provided",
+            "url": "http://destination.com/upload.cgi",
+            "fieldName": "grubby",
+            "customHeaders": {
+                "Age": 30
+            }
+        }
+    }
+
