@@ -135,13 +135,14 @@ class UploadTransmitter:
         directory = configuration.get("directory")
 
         if not os.path.isdir(directory):
+            logger.error("destination directory not found.")
             return
 
         try:
-            shutil.copyfile(
-                file.name, os.path.join(directory,
-                                        os.path.basename(file.name)))
-            send_update('INFO', 'file copied successfully', self.update_callback_data)
+            basename = os.path.basename(file.name)
+            dest_path = os.path.join(directory, basename)
+            shutil.copyfile(file.name, dest_path)
+            send_update('INFO', 'file written to disk successfully', self.update_callback_data)
         except Exception as e:
             logger.error(e)
             send_update('ERROR', f'disk file copy failed. {e}', self.update_callback_data)
