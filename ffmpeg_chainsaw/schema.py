@@ -18,7 +18,7 @@ instruction_schema = {
         },        
         "outputFileName": {
             "type": "string",
-            "description": "The name of the output file name including the extension. A random name is provided if not provided"
+            "description": "The name of the output file name including the extension. A random name is generated if not provided"
         },
         "updateCallback": {
             "type": "object",
